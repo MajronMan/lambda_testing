@@ -9,10 +9,13 @@ import qualified Network.AWS.Lambda          as Lambda
 
 main = do
     env <- AWS.newEnv AWS.Discover <&> AWS.envRegion .~ AWS.NorthVirginia
+    
     let run n = replicateM_ n . AWS.runResourceT . AWS.runAWS env . AWS.send
 
-    start <- Time.getZonedTime
-    run 1000 $ Lambda.invoke "testFunc" ""
-    end <- Time.getZonedTime
+    start <- Time.getCurrentTime
 
-    print $ Time.diffUTCTime (Time.zonedTimeToUTC end) (Time.zonedTimeToUTC start)
+    run 100 $ Lambda.invoke "testFunc" ""
+
+    end <- Time.getCurrentTime
+
+    print $ Time.diffUTCTime end start

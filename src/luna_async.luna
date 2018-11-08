@@ -2,14 +2,13 @@ import Std.Base
 import Std.AWS
 import Std.Time
 
-
 def main:
     testFunc = AWS.init . lookupFunction "testFunc" . get
 
     t0 = Time.now
 
-    1 . upto 1000
-        . each i: testFunc.invokeAsync ""
+    1 . upto 10
+        . each i: future (1 . upto 100 . each i: testFunc.invoke "")
         . each f: f.await
 
     t1 = Time.now

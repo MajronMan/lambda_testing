@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Lens
-import Control.Monad.Parallel
+import Control.Monad.Parallel (replicateM_)
+import Network.HTTP.Conduit (newManager)
 
 import qualified Data.Time                   as Time
 import qualified Network.AWS                 as AWS
@@ -9,10 +10,14 @@ import qualified Network.AWS.Lambda          as Lambda
 
 main = do
     env <- AWS.newEnv AWS.Discover <&> AWS.envRegion .~ AWS.NorthVirginia
-    let run n = replicateM_ n . AWS.runResourceT . AWS.runAWS env . AWS.send
 
-    start <- Time.getZonedTime
-    run 1000 $ Lambda.invoke "testFunc" ""
-    end <- Time.getZonedTime
+    start <- Time.getCurrentTime
 
-    print $ Time.diffUTCTime (Time.zonedTimeToUTC end) (Time.zonedTimeToUTC start)
+    replicateM_ 10
+        . AWS.runResourceT . AWS.runAWS env
+        . foldr1 (>>) . replicate 100
+        . AWS.send $ Lambda.invoke "testFunc" ""
+
+    end <- Time.getCurrentTime
+
+    print $ Time.diffUTCTime end start
