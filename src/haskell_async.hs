@@ -8,16 +8,20 @@ import qualified Data.Time                   as Time
 import qualified Network.AWS                 as AWS
 import qualified Network.AWS.Lambda          as Lambda
 
-main = do
-    env <- AWS.newEnv AWS.Discover <&> AWS.envRegion .~ AWS.NorthVirginia
 
+benchmark env threads = do
     start <- Time.getCurrentTime
 
-    replicateM_ 10
+    replicateM_ threads
         . AWS.runResourceT . AWS.runAWS env
-        . foldr1 (>>) . replicate 100
+        . foldr1 (>>) . replicate 10
         . AWS.send $ Lambda.invoke "testFunc" ""
 
     end <- Time.getCurrentTime
 
     print $ Time.diffUTCTime end start
+
+
+main = do
+    env <- AWS.newEnv AWS.Discover <&> AWS.envRegion .~ AWS.NorthVirginia
+    mapM_ (benchmark env) $ [1..100]

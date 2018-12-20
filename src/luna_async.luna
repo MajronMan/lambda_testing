@@ -2,14 +2,20 @@ import Std.Base
 import Std.AWS
 import Std.Time
 
-def main:
-    testFunc = AWS.init . lookupFunction "testFunc" . get
 
+def benchmark testFunc threads:
     t0 = Time.now
 
-    1 . upto 10
-        . each i: future (1 . upto 100 . each i: testFunc.invoke "")
+    1 . upto threads
+        . each i: future (1 . upto 10 . each i: testFunc.invoke "")
         . each f: f.await
 
     t1 = Time.now
     print (t1 . diff t0)
+
+def main:
+
+    testFunc = AWS.init . lookupFunction "testFunc" . get
+
+    1 . upto 100
+        . each threads: benchmark testFunc threads
